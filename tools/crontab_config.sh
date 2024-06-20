@@ -6,6 +6,8 @@ PWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # Create a cron job to backup the database every 2 minutes
 echo "Creating a cron job to backup the database every 2 minutes..."
 
+crontab -l | { cat; echo "* * * * * exec $PWD/dump_databases.sh"; } | crontab - 
 
-crontab -l | { cat; echo "* * * * * python3 $PWD/db-backup.py"; } | crontab -
-crontab -l | { cat; echo "* * * * * echo 'Run this every minute' >> cron.log"; } | crontab -
+# Add a empty infinite loop to keep the container running
+echo "Press [CTRL+C] to stop the server."
+while true; do sleep 1000; done

@@ -21,6 +21,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+
   nginx:
     image: nginx
     container_name: ordiso_nginx
@@ -35,6 +36,7 @@ services:
     depends_on:
       - ordiso_db_mysql
 
+
   ordiso_adminer:
     image: adminer
     restart: always
@@ -43,6 +45,7 @@ services:
       - 7070:8080
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
 
   ordiso_docs:
     image: ubuntu:latest
@@ -58,6 +61,7 @@ services:
         - ./docs:/docs
         - ./tools:/tools
     command: bash -c "cd /tools && ./docs-server.sh"
+
 
   ordiso_db_mysql:
     image: mysql:8.0
@@ -76,6 +80,7 @@ services:
     volumes:
       - ./tmp/backups/ordiso.db:/docker-entrypoint-initdb.d
       
+
   ordiso_db_postgres:
     image: postgres:14
     container_name: ordiso_db_postgres
@@ -89,6 +94,7 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./tmp/backups/ordiso.superset:/docker-entrypoint-initdb.d
+
 
   ordiso_superset:
     env_file: docker/superset/.env
@@ -105,6 +111,18 @@ services:
     volumes: *superset-volumes
 
 
+  # ordiso_backuper:
+  #   image: ubuntu:latest
+  #   container_name: ordiso_backuper
+  #   restart: always
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
+  #   volumes:
+  #     - ./tmp/backups:/backups
+  #     - ./tools:/tools
+  #   command: bash -c "cd /tools && ./backuper.sh"
+
+
   superset-init:
     image: *superset-image
     container_name: superset_init
@@ -115,6 +133,7 @@ services:
     volumes: *superset-volumes
     healthcheck:
       disable: true
+
 
   superset-worker:
     image: *superset-image
@@ -132,6 +151,7 @@ services:
           "celery -A superset.tasks.celery_app:app inspect ping -d celery@$$HOSTNAME",
         ]
 
+
   superset-worker-beat:
     image: *superset-image
     container_name: superset_worker_beat
@@ -143,6 +163,7 @@ services:
     volumes: *superset-volumes
     healthcheck:
       disable: true
+
 
 volumes:
   ordiso-mysql-data:
