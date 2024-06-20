@@ -10,15 +10,16 @@ Welcome to Ordiso-Server's documentation!
 Esta es la documentacion de Ordiso-Server, bienvenido.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Overview:
 
-   configuration/index
+   configuration/introduction
+   configuration/configuration
 
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Services:
 
    services/nginx

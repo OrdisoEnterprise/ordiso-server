@@ -14,8 +14,11 @@ sudo apt install -y make \
     docker-compose \
     postgresql \
     postgresql-common \
+    mysql-server \
     python3-sphinx
 
+# Install python requirements from requirements.txt
+pip3 install -r ${SCRIPT_PATH}/requirements/requirements.txt
 
 # Create temporary directory tree for the database backup
 mkdir -p ./tmp/backups/ordiso.db
@@ -23,7 +26,7 @@ mkdir -p ./tmp/backups/ordiso.superset
 
 # If fresh installation, download the newest version of the database backups
 # python3 ./storage/main.py
-python3 ${SCRIPT_PATH}/storage/main.py initialize --config_file ${SCRIPT_PATH}/docker/backup_conf.json --output_folder ${SCRIPT_PATH}
+python3 ${SCRIPT_PATH}/tools/backupManager/cli.py initialize ${SCRIPT_PATH}/docker/backup_conf.json ${SCRIPT_PATH}
 
 # Pull Docker images
 sudo docker-compose pull

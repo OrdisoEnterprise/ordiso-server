@@ -1,3 +1,5 @@
 tmp/*
 docs/build/*
 tools/backupManager/data/credential.json
+docs/build
+**/__pycache__

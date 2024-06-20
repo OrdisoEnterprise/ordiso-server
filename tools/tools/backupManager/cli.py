@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import io
 from pathlib import Path
 from typing import Annotated
@@ -27,6 +28,8 @@ class BackupManager:
         self.gdrive = GDriveBackupManager()
 
     def backup(self, name: str, artifact: Path):
+        """ Backup file to remote """
+
         # Check if valid backup group name
         if name not in [item.name for item in self.backup_local_list.items]:
             rich.print(f"Backup {name} not found in backup config list.")
@@ -63,7 +66,7 @@ class BackupManager:
         Path('backup_register.json').unlink()
 
     def initialize(self, output_folder: Path):
-
+        """ Download all backups from remote """
         backup_remote_list = self.gdrive.getRemoteBackupList()
 
         for local_item in self.backup_local_list.items:
@@ -82,15 +85,19 @@ class BackupManager:
                     rich.print(output_path)
                     self.gdrive.downloadFile(backup_id, output_path)
 
-    def cleanup(self):
+    def cleanup(self, name: str):
+        """ Remove old backups from remote """
+
         pass
 
     def list(self):
+        """ List all backups """
         backups = self.gdrive.list()
         for backup in backups:
             rich.print(backup)
 
     def remove(self, file_id: str):
+        """ Remove backup """
         self.gdrive.delete(file_id)
 
 
