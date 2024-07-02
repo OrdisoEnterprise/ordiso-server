@@ -9,9 +9,10 @@ apt install -yq --no-install-recommends python3 \
     make \
     python3-pip \
     python3-sphinx \
-    python3-sphinx-autobuild 
+    python3-sphinx-autobuild \
 
-pip3 install sphinx-rtd-theme --break-system-packages
+
+pip3 install sphinx-rtd-theme sphinxcontrib-plantuml --break-system-packages
 
 # Get the documentation project directory from a environment variable
 ROOT_DIR=$DOCUMENTATION_ROOT_DIR

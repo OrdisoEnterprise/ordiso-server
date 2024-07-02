@@ -74,7 +74,7 @@ services:
       MYSQL_PASSWORD: ordiso
       MYSQL_ROOT_HOST: "%"
     ports:
-      - "127.0.0.1:33050:3306"
+      - "33050:3306"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
@@ -122,6 +122,17 @@ services:
   #     - ./tools:/tools
   #   command: bash -c "cd /tools && ./backuper.sh"
 
+  ordiso_pypi_server:
+    image: pypiserver/pypiserver:latest
+    container_name: ordiso_pypi_server
+    ports:
+      - 8087:8080
+    volumes:
+      - type: volume
+        source: pypi-server
+        target: /data/packages
+    command: -P . -a . /data/packages
+    restart: always
 
   superset-init:
     image: *superset-image
@@ -173,4 +184,6 @@ volumes:
   db_home:
     external: false
   redis:
+    external: false
+  pypi-server:
     external: false

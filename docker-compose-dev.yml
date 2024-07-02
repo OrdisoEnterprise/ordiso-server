@@ -1,0 +1,176 @@
+x-superset-image: &superset-image apachesuperset.docker.scarf.sh/apache/superset:${TAG:-latest}
+x-superset-depends-on: &superset-depends-on
+  # - db
+  - ordiso_db_postgres
+  - redis
+x-superset-volumes:
+  &superset-volumes # /app/pythonpath_docker will be appended to the PYTHONPATH in the final container
+  - ./docker/superset:/app/docker
+  - superset_home:/app/superset_home
+
+version: '3.1'
+
+services:
+
+  redis:
+    image: redis:7
+    container_name: superset_cache
+    restart: unless-stopped
+    volumes:
+      - redis:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+
+  nginx:
+    image: nginx
+    container_name: ordiso_nginx
+    ports:
+      - 80:80
+      - 33040:33040
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    restart: unless-stopped
+    depends_on:
+      - ordiso_db_mysql
+
+
+  ordiso_adminer:
+    image: adminer
+    restart: always
+    container_name: ordiso_adminer
+    ports:
+      - 7070:8080
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+
+  ordiso_docs:
+    image: ubuntu:latest
+    container_name: ordiso_docs
+    restart: always
+    environment:
+      DOCUMENTATION_ROOT_DIR: "/docs"
+    ports:
+        - 90:9000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+        - ./docs:/docs
+        - ./tools:/tools
+    command: bash -c "cd /tools && ./docs-server.sh"
+
+
+  ordiso_db_mysql:
+    image: mysql:8.0
+    container_name: ordiso_db_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ordiso
+      MYSQL_USER: ordiso
+      MYSQL_PASSWORD: ordiso
+      MYSQL_ROOT_HOST: "%"
+    ports:
+      - "127.0.0.1:33050:3306"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./tmp/backups/ordiso.db:/docker-entrypoint-initdb.d
+      
+
+  ordiso_db_postgres:
+    image: postgres:14
+    container_name: ordiso_db_postgres
+    restart: always
+    environment:
+      # POSTGRES_USER: superset
+      POSTGRES_PASSWORD: superset
+    ports:
+      - "127.0.0.1:54320:5432"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./tmp/backups/ordiso.superset:/docker-entrypoint-initdb.d
+
+
+  ordiso_superset:
+    env_file: docker/superset/.env
+    image: *superset-image
+    container_name: ordiso_superset_app
+    command: ["/app/docker/docker-bootstrap.sh", "app-gunicorn"]
+    user: "root"
+    restart: unless-stopped
+    ports:
+      - 8088:8088
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on: *superset-depends-on
+    volumes: *superset-volumes
+
+
+  # ordiso_backuper:
+  #   image: ubuntu:latest
+  #   container_name: ordiso_backuper
+  #   restart: always
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
+  #   volumes:
+  #     - ./tmp/backups:/backups
+  #     - ./tools:/tools
+  #   command: bash -c "cd /tools && ./backuper.sh"
+
+
+  superset-init:
+    image: *superset-image
+    container_name: superset_init
+    command: ["/app/docker/docker-init.sh"]
+    env_file: docker/superset/.env
+    depends_on: *superset-depends-on
+    user: "root"
+    volumes: *superset-volumes
+    healthcheck:
+      disable: true
+
+
+  superset-worker:
+    image: *superset-image
+    container_name: superset_worker
+    command: ["/app/docker/docker-bootstrap.sh", "worker"]
+    env_file: docker/superset/.env
+    restart: unless-stopped
+    depends_on: *superset-depends-on
+    user: "root"
+    volumes: *superset-volumes
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "celery -A superset.tasks.celery_app:app inspect ping -d celery@$$HOSTNAME",
+        ]
+
+
+  superset-worker-beat:
+    image: *superset-image
+    container_name: superset_worker_beat
+    command: ["/app/docker/docker-bootstrap.sh", "beat"]
+    env_file: docker/superset/.env
+    restart: unless-stopped
+    depends_on: *superset-depends-on
+    user: "root"
+    volumes: *superset-volumes
+    healthcheck:
+      disable: true
+
+
+volumes:
+  ordiso-mysql-data:
+    name: ordiso-mysql-data
+  superset_home:
+    external: false
+  db_home:
+    external: false
+  redis:
+    external: false

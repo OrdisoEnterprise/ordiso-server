@@ -27,3 +27,10 @@ Esta es la documentacion de Ordiso-Server, bienvenido.
    services/mysqldb
    services/postgregsqldb
    services/sphinx-docs
+   services/pypi_server
+
+
+.. uml::
+
+   Alice -> Bob: Hi!
+   Alice <- Bob: How are you?

@@ -58,6 +58,10 @@ LAN Ports Configuration
      - Superset Web Server
      - HTTP
      - `http://localhost/superset <http://localhost/superset>`_
+   * - 8087
+     - PyPi Server
+     - HTTP
+     - `http://localhost/pypi <http://localhost/pypi>`_
    * - 22
      - Secure Shell port 
      - TCP/IP
@@ -99,6 +103,11 @@ Links Access
      - HTTP
      - `http://localhost/superset <http://localhost/superset>`_
      - `http://superset.embeddedsource.es <http://superset.embeddedsource.es>`_
+   * - 8087
+     - PyPi Server
+     - HTTP
+     -
+     - `http://pypi.embeddedsource.es <http://pypi.embeddedsource.es>`_
    * - 22
      - SSH port
      - TCP/IP
