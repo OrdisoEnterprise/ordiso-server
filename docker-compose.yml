@@ -6,7 +6,7 @@ x-superset-depends-on: &superset-depends-on
 x-superset-volumes:
   &superset-volumes # /app/pythonpath_docker will be appended to the PYTHONPATH in the final container
   - ./docker/superset:/app/docker
-  - superset_home:/app/superset_home
+  - ./data/volumes/ordiso-superset-data/app/superset_home:/app/superset_home
 
 version: '3.1'
 
@@ -79,6 +79,7 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./tmp/backups/ordiso.db:/docker-entrypoint-initdb.d
+      - ./data/volumes/ordiso-db-mysql-data/var/lib/mysql:/var/lib/mysql
       
 
   ordiso_db_postgres:
@@ -94,22 +95,7 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./tmp/backups/ordiso.superset:/docker-entrypoint-initdb.d
-
-
-  ordiso_superset:
-    env_file: docker/superset/.env
-    image: *superset-image
-    container_name: ordiso_superset_app
-    command: ["/app/docker/docker-bootstrap.sh", "app-gunicorn"]
-    user: "root"
-    restart: unless-stopped
-    ports:
-      - 8088:8088
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    depends_on: *superset-depends-on
-    volumes: *superset-volumes
-
+      - ./data/volumes/ordiso-db-postgres-data/var/lib/postgresql/data:/var/lib/postgresql/data
 
   # ordiso_backuper:
   #   image: ubuntu:latest
@@ -128,11 +114,25 @@ services:
     ports:
       - 8087:8080
     volumes:
-      - type: volume
-        source: pypi-server
-        target: /data/packages
+      - ./data/volumes/ordiso-pypi-server-data/data/packages:/data/packages
     command: -P . -a . /data/packages
     restart: always
+
+
+  ordiso_superset:
+    env_file: docker/superset/.env
+    image: *superset-image
+    container_name: ordiso_superset_app
+    command: ["/app/docker/docker-bootstrap.sh", "app-gunicorn"]
+    user: "root"
+    restart: unless-stopped
+    ports:
+      - 8088:8088
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on: *superset-depends-on
+    volumes: *superset-volumes
+
 
   superset-init:
     image: *superset-image
