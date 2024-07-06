@@ -3,3 +3,4 @@ docs/build/*
 tools/backupManager/data/credential.json
 docs/build
 **/__pycache__
+data/*

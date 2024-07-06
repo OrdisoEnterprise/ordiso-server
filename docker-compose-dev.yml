@@ -22,19 +22,19 @@ services:
       - "host.docker.internal:host-gateway"
 
 
-  nginx:
-    image: nginx
-    container_name: ordiso_nginx
-    ports:
-      - 80:80
-      - 33040:33040
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    volumes:
-      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-    restart: unless-stopped
-    depends_on:
-      - ordiso_db_mysql
+  # nginx:
+  #   image: nginx
+  #   container_name: ordiso_nginx
+  #   ports:
+  #     - 80:80
+  #     - 33040:33040
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
+  #   volumes:
+  #     - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - ordiso_db_mysql
 
 
   ordiso_adminer:
@@ -109,18 +109,6 @@ services:
       - "host.docker.internal:host-gateway"
     depends_on: *superset-depends-on
     volumes: *superset-volumes
-
-
-  # ordiso_backuper:
-  #   image: ubuntu:latest
-  #   container_name: ordiso_backuper
-  #   restart: always
-  #   extra_hosts:
-  #     - "host.docker.internal:host-gateway"
-  #   volumes:
-  #     - ./tmp/backups:/backups
-  #     - ./tools:/tools
-  #   command: bash -c "cd /tools && ./backuper.sh"
 
 
   superset-init:

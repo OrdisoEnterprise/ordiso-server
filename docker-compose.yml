@@ -12,6 +12,18 @@ version: '3.1'
 
 services:
 
+  ordiso-homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: ordiso-homepage
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+    volumes:
+      - ./data/volumes/ordiso-homepage:/app/config # Make sure your local config directory exists
+      - /var/run/docker.sock:/var/run/docker.sock # (optional) For docker integrations
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
   redis:
     image: redis:7
     container_name: superset_cache
@@ -22,19 +34,20 @@ services:
       - "host.docker.internal:host-gateway"
 
 
-  nginx:
-    image: nginx
-    container_name: ordiso_nginx
+  ordiso_nginx_manager:
+    image: 'jc21/nginx-proxy-manager:latest'
+    restart: unless-stopped
+    container_name: ordiso_nginx_manager
     ports:
-      - 80:80
-      - 33040:33040
+      - '80:80'
+      # - '443:443' # Public HTTPS Port
+      - '81:81'
+      - '33040:33040'
+    volumes:
+      - ./data/volumes/ordiso-nginx-manager-data/data:/data
+      - ./data/volumes/ordiso-nginx-manager-data/letsencrypt:/etc/letsencrypt
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    volumes:
-      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-    restart: unless-stopped
-    depends_on:
-      - ordiso_db_mysql
 
 
   ordiso_adminer:
@@ -95,7 +108,7 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./tmp/backups/ordiso.superset:/docker-entrypoint-initdb.d
-      - ./data/volumes/ordiso-db-postgres-data/var/lib/postgresql/data:/var/lib/postgresql/data
+      - ./data/volumes/ordiso-db-postgres-data/var/lib/postgresql:/var/lib/postgresql
 
   # ordiso_backuper:
   #   image: ubuntu:latest
@@ -175,6 +188,34 @@ services:
     healthcheck:
       disable: true
 
+  ordiso-dockerproxy:
+    image: ghcr.io/tecnativa/docker-socket-proxy:latest
+    container_name: ordiso-dockerproxy
+    environment:
+      - CONTAINERS=1 # Allow access to viewing containers
+      - SERVICES=1 # Allow access to viewing services (necessary when using Docker Swarm)
+      - TASKS=1 # Allow access to viewing tasks (necessary when using Docker Swarm)
+      - POST=0 # Disallow any POST operations (effectively read-only)
+    ports:
+      - 127.0.0.1:2375:2375
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Mounted as read-only
+    restart: unless-stopped
+
+  ordiso-dockge:
+    image: louislam/dockge:1.3.3
+    container_name: ordiso-dockge
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data/volumes/ordiso-dockge-data:/app/data
+      - /opt/stacks:/opt/stacks
+    environment:
+      - DOCKGE_STACKS_DIR=/opt/stacks
+    ports:
+      - 5001:5001
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
 
 volumes:
   ordiso-mysql-data:
