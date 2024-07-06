@@ -1,0 +1,20 @@
+$TTL 2d
+$ORIGIN embeddedsource.es.
+
+@               IN      SOA     ns.embeddedsource.es. info.embeddedsource.es. (
+                                2024070600      ; serial
+                                12h             ; refresh
+                                15m             ; retry
+                                3w              ; expiry
+                                2h              ; minimum
+                                )            
+
+                IN      NS      ns.embeddedsource.es. 
+
+ns              IN      A       192.168.0.31
+
+; -- add dns records below
+
+; -- demo servers
+
+*               IN      A       192.168.0.31

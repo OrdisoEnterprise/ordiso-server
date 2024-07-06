@@ -217,6 +217,105 @@ services:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
+
+  ordiso-authentik-postgres:
+    image: docker.io/library/postgres:16-alpine
+    restart: unless-stopped
+    container_name: ordiso-authentik-postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 5s
+    volumes:
+      - ./data/volumes/ordiso-authentik-data/ordiso-authentik-postgres/database:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_DB=${POSTGRES_DB}
+    env_file: 
+      - .env
+
+  ordiso-authentik-redis:
+    image: docker.io/library/redis:alpine
+    container_name: ordiso-authentik-redis
+    command: --save 60 1 --loglevel warning
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 3s
+    volumes:
+      - ./data/volumes/ordiso-authentik-data/ordiso-authentik-redis/data:/data
+
+  ordiso-authentik-server:
+    image: ghcr.io/goauthentik/server:2024.6.0
+    container_name: ordiso-authentik-server
+    restart: unless-stopped
+    command: server
+    environment:
+      - AUTHENTIK_REDIS__HOST=ordiso-authentik-redis
+      - AUTHENTIK_POSTGRESQL__HOST=ordiso-authentik-postgres
+      - AUTHENTIK_POSTGRESQL__USER=${POSTGRES_USER}
+      - AUTHENTIK_POSTGRESQL__NAME=${POSTGRES_DB}
+      - AUTHENTIK_POSTGRESQL__PASSWORD=${POSTGRES_PASSWORD}
+      - AUTHENTIK_SECRET_KEY=${AUTHENTIK_SECRET_KEY}
+      - AUTHENTIK_ERROR_REPORTING__ENABLED=true
+    volumes:
+      - ./data/volumes/ordiso-authentik-data/media:/media
+      - ./data/volumes/ordiso-authentik-data/custom-templates:/templates
+    env_file: 
+      - .env
+    ports:
+      - "9001:9000"
+      - "9442:9443"
+    depends_on:
+      - ordiso-authentik-postgres
+      - ordiso-authentik-redis
+
+  ordiso-authentik-worker:
+    image: ghcr.io/goauthentik/server:2024.6.0
+    container_name: ordiso-authentik-worker
+    restart: unless-stopped
+    command: worker
+    environment:
+      - AUTHENTIK_REDIS__HOST=ordiso-authentik-redis
+      - AUTHENTIK_POSTGRESQL__HOST=ordiso-authentik-postgres
+      - AUTHENTIK_POSTGRESQL__USER=${POSTGRES_USER}
+      - AUTHENTIK_POSTGRESQL__NAME=${POSTGRES_DB}
+      - AUTHENTIK_POSTGRESQL__PASSWORD=${POSTGRES_PASSWORD}
+      - AUTHENTIK_SECRET_KEY=${AUTHENTIK_SECRET_KEY}
+      - AUTHENTIK_ERROR_REPORTING__ENABLED=true
+    user: root
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data/volumes/ordiso-authentik-data/media:/media
+      - ./data/volumes/ordiso-authentik-data/certs:/certs
+      - ./data/volumes/ordiso-authentik-data/custom-templates:/templates
+    env_file: 
+      - .env
+    depends_on:
+      - ordiso-authentik-postgres
+      - ordiso-authentik-redis
+
+  ordiso-dns-server:
+    image: ubuntu/bind9:latest
+    container_name: ordiso-dns-server
+    environment:
+      - BIND9_USER=root
+      - TZ=Europe/Madrid
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+    volumes:
+      - ./docker/bind9/config:/etc/bind
+      - ./data/volumes/ordiso-dns-server/var/cache/bind:/var/cache/bind
+      - ./data/volumes/ordiso-dns-server/var/records:/var/lib/bind
+    restart: unless-stopped
+
 volumes:
   ordiso-mysql-data:
     name: ordiso-mysql-data
@@ -227,4 +326,8 @@ volumes:
   redis:
     external: false
   pypi-server:
+    external: false
+
+networks:
+  default:
     external: false
