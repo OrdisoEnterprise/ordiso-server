@@ -40,14 +40,20 @@ services:
     container_name: ordiso_nginx_manager
     ports:
       - '80:80'
-      # - '443:443' # Public HTTPS Port
       - '81:81'
+      - '443:443'
       - '33040:33040'
     volumes:
       - ./data/volumes/ordiso-nginx-manager-data/data:/data
       - ./data/volumes/ordiso-nginx-manager-data/letsencrypt:/etc/letsencrypt
+      - ./data/volumes/ordiso-nginx-manager-data/snippets:/snippets
+    networks:
+      net:
+        aliases: []
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    environment:
+      TZ: 'Europe/Madrid'
 
 
   ordiso_adminer:
@@ -197,7 +203,7 @@ services:
       - TASKS=1 # Allow access to viewing tasks (necessary when using Docker Swarm)
       - POST=0 # Disallow any POST operations (effectively read-only)
     ports:
-      - 127.0.0.1:2375:2375
+      - 2375:2375
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro # Mounted as read-only
     restart: unless-stopped
@@ -316,6 +322,57 @@ services:
       - ./data/volumes/ordiso-dns-server/var/records:/var/lib/bind
     restart: unless-stopped
 
+  ordiso-authelia:
+    container_name: 'ordiso-authelia'
+    image: 'authelia/authelia'
+    restart: 'unless-stopped'
+    networks:
+      net:
+        aliases: []
+    ports:
+      - "9091:9091"
+    volumes:
+      - './data/volumes/ordiso-authelia-data/config:/config'
+    environment:
+      TZ: 'Europe/Madrid'
+
+  demo-nextcloud:
+    container_name: 'demo-nextcloud'
+    image: 'lscr.io/linuxserver/nextcloud'
+    restart: 'unless-stopped'
+    networks:
+      net:
+        aliases: []
+    ports:
+      - "446:443"
+    volumes:
+      - './data/volumes/demo-nextcloud/config:/config'
+      - './data/volumes/demo-nextcloud/data:/data'
+    environment:
+      PUID: '1000'
+      PGID: '1000'
+      TZ: 'Europe/Madrid'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  ordiso-duplicati:
+    image: ghcr.io/linuxserver/duplicati
+    container_name: ordiso-duplicati
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=Europe/Madrid
+      # (optional) - CLI_ARGS=
+    volumes:
+      - ./data/volumes/ordiso-duplicati-data/config:/config
+      - ./data/volumes:/source
+      - /backups:/backups
+    ports:
+      - 8200:8200
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
 volumes:
   ordiso-mysql-data:
     name: ordiso-mysql-data
@@ -331,3 +388,5 @@ volumes:
 networks:
   default:
     external: false
+  net:
+    driver: 'bridge'
