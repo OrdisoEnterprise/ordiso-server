@@ -1,14 +1,13 @@
 x-superset-image: &superset-image apachesuperset.docker.scarf.sh/apache/superset:${TAG:-latest}
 x-superset-depends-on: &superset-depends-on
   # - db
-  - ordiso_db_postgres
-  - redis
+  # - ordiso_db_postgres
+  - ordiso-superset-redis
 x-superset-volumes:
   &superset-volumes # /app/pythonpath_docker will be appended to the PYTHONPATH in the final container
   - ./docker/superset:/app/docker
   - ./data/volumes/ordiso-superset-data/app/superset_home:/app/superset_home
 
-version: '3.1'
 
 services:
 
@@ -16,22 +15,14 @@ services:
     image: ghcr.io/gethomepage/homepage:latest
     container_name: ordiso-homepage
     restart: unless-stopped
-    ports:
-      - 3000:3000
     volumes:
       - ./data/volumes/ordiso-homepage:/app/config # Make sure your local config directory exists
       - /var/run/docker.sock:/var/run/docker.sock # (optional) For docker integrations
     extra_hosts:
       - "host.docker.internal:host-gateway"
-
-  redis:
-    image: redis:7
-    container_name: superset_cache
-    restart: unless-stopped
-    volumes:
-      - redis:/data
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    networks:
+      - ordiso-public
+      - ordiso-internal
 
 
   ordiso_nginx_manager:
@@ -48,22 +39,37 @@ services:
       - ./data/volumes/ordiso-nginx-manager-data/letsencrypt:/etc/letsencrypt
       - ./data/volumes/ordiso-nginx-manager-data/snippets:/snippets
     networks:
-      net:
-        aliases: []
+      - ordiso-internal
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
       TZ: 'Europe/Madrid'
 
 
+  ordiso-vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: ordiso-vaultwarden
+    restart: always
+    networks:
+      - ordiso-internal
+    volumes:
+      - ./data/volumes/ordiso-bitwarden-data/data:/data
+    environment:
+      WEBSOCKET_ENABLED: 'true' # Required to use websockets
+      SIGNUPS_ALLOWED: 'true'   # set to false to disable signups
+      PUSH_ENABLED: ${PUSH_ENABLED:-'true'} # set to false to disable push notifications
+      PUSH_INSTALLATION_ID: ${PUSH_INSTALLATION_ID:-''} # set to a unique value to enable push notifications
+      PUSH_INSTALLATION_KEY: ${PUSH_INSTALLATION_KEY:-''} # set to a unique value to enable push notifications
+      PUSH_RELAY_BASE_URI: https://push.bitwarden.com
+
   ordiso_adminer:
     image: adminer
     restart: always
     container_name: ordiso_adminer
-    ports:
-      - 7070:8080
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - ordiso-internal
 
 
   ordiso_docs:
@@ -72,10 +78,10 @@ services:
     restart: always
     environment:
       DOCUMENTATION_ROOT_DIR: "/docs"
-    ports:
-        - 90:9000
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - ordiso-internal
     volumes:
         - ./docs:/docs
         - ./tools:/tools
@@ -99,12 +105,15 @@ services:
     volumes:
       - ./tmp/backups/ordiso.db:/docker-entrypoint-initdb.d
       - ./data/volumes/ordiso-db-mysql-data/var/lib/mysql:/var/lib/mysql
+    networks:
+      - ordiso-internal
       
 
   ordiso_db_postgres:
     image: postgres:14
     container_name: ordiso_db_postgres
     restart: always
+    user: 1000:1000
     environment:
       # POSTGRES_USER: superset
       POSTGRES_PASSWORD: superset
@@ -113,29 +122,21 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ./tmp/backups/ordiso.superset:/docker-entrypoint-initdb.d
-      - ./data/volumes/ordiso-db-postgres-data/var/lib/postgresql:/var/lib/postgresql
+      # - ./tmp/backups/ordiso.superset:/docker-entrypoint-initdb.d
+      - ./data/volumes/ordiso-db-postgres-data/var/lib/postgresql/data:/var/lib/postgresql/data
+    networks:
+      - ordiso-internal
 
-  # ordiso_backuper:
-  #   image: ubuntu:latest
-  #   container_name: ordiso_backuper
-  #   restart: always
-  #   extra_hosts:
-  #     - "host.docker.internal:host-gateway"
-  #   volumes:
-  #     - ./tmp/backups:/backups
-  #     - ./tools:/tools
-  #   command: bash -c "cd /tools && ./backuper.sh"
 
   ordiso_pypi_server:
     image: pypiserver/pypiserver:latest
     container_name: ordiso_pypi_server
-    ports:
-      - 8087:8080
     volumes:
       - ./data/volumes/ordiso-pypi-server-data/data/packages:/data/packages
     command: -P . -a . /data/packages
     restart: always
+    networks:
+      - ordiso-internal
 
 
   ordiso_superset:
@@ -151,23 +152,13 @@ services:
       - "host.docker.internal:host-gateway"
     depends_on: *superset-depends-on
     volumes: *superset-volumes
+    networks:
+      - ordiso-internal
 
 
-  superset-init:
+  ordiso-superset-worker:
     image: *superset-image
-    container_name: superset_init
-    command: ["/app/docker/docker-init.sh"]
-    env_file: docker/superset/.env
-    depends_on: *superset-depends-on
-    user: "root"
-    volumes: *superset-volumes
-    healthcheck:
-      disable: true
-
-
-  superset-worker:
-    image: *superset-image
-    container_name: superset_worker
+    container_name: ordiso_superset_worker
     command: ["/app/docker/docker-bootstrap.sh", "worker"]
     env_file: docker/superset/.env
     restart: unless-stopped
@@ -180,11 +171,13 @@ services:
           "CMD-SHELL",
           "celery -A superset.tasks.celery_app:app inspect ping -d celery@$$HOSTNAME",
         ]
+    networks:
+      - ordiso-internal
 
 
-  superset-worker-beat:
+  ordiso-superset-worker-beat:
     image: *superset-image
-    container_name: superset_worker_beat
+    container_name: ordiso_superset_worker_beat
     command: ["/app/docker/docker-bootstrap.sh", "beat"]
     env_file: docker/superset/.env
     restart: unless-stopped
@@ -193,119 +186,21 @@ services:
     volumes: *superset-volumes
     healthcheck:
       disable: true
+    networks:
+      - ordiso-internal
 
-  ordiso-dockerproxy:
-    image: ghcr.io/tecnativa/docker-socket-proxy:latest
-    container_name: ordiso-dockerproxy
-    environment:
-      - CONTAINERS=1 # Allow access to viewing containers
-      - SERVICES=1 # Allow access to viewing services (necessary when using Docker Swarm)
-      - TASKS=1 # Allow access to viewing tasks (necessary when using Docker Swarm)
-      - POST=0 # Disallow any POST operations (effectively read-only)
-    ports:
-      - 2375:2375
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro # Mounted as read-only
+
+  ordiso-superset-redis:
+    image: redis:7
+    container_name: ordiso_superset_cache
     restart: unless-stopped
-
-  ordiso-dockge:
-    image: louislam/dockge:1.3.3
-    container_name: ordiso-dockge
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./data/volumes/ordiso-dockge-data:/app/data
-      - /opt/stacks:/opt/stacks
-    environment:
-      - DOCKGE_STACKS_DIR=/opt/stacks
-    ports:
-      - 5001:5001
+      - redis:/data
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    restart: unless-stopped
+    networks:
+      - ordiso-internal
 
-
-  ordiso-authentik-postgres:
-    image: docker.io/library/postgres:16-alpine
-    restart: unless-stopped
-    container_name: ordiso-authentik-postgres
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
-      start_period: 20s
-      interval: 30s
-      retries: 5
-      timeout: 5s
-    volumes:
-      - ./data/volumes/ordiso-authentik-data/ordiso-authentik-postgres/database:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_DB=${POSTGRES_DB}
-    env_file: 
-      - .env
-
-  ordiso-authentik-redis:
-    image: docker.io/library/redis:alpine
-    container_name: ordiso-authentik-redis
-    command: --save 60 1 --loglevel warning
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
-      start_period: 20s
-      interval: 30s
-      retries: 5
-      timeout: 3s
-    volumes:
-      - ./data/volumes/ordiso-authentik-data/ordiso-authentik-redis/data:/data
-
-  ordiso-authentik-server:
-    image: ghcr.io/goauthentik/server:2024.6.0
-    container_name: ordiso-authentik-server
-    restart: unless-stopped
-    command: server
-    environment:
-      - AUTHENTIK_REDIS__HOST=ordiso-authentik-redis
-      - AUTHENTIK_POSTGRESQL__HOST=ordiso-authentik-postgres
-      - AUTHENTIK_POSTGRESQL__USER=${POSTGRES_USER}
-      - AUTHENTIK_POSTGRESQL__NAME=${POSTGRES_DB}
-      - AUTHENTIK_POSTGRESQL__PASSWORD=${POSTGRES_PASSWORD}
-      - AUTHENTIK_SECRET_KEY=${AUTHENTIK_SECRET_KEY}
-      - AUTHENTIK_ERROR_REPORTING__ENABLED=true
-    volumes:
-      - ./data/volumes/ordiso-authentik-data/media:/media
-      - ./data/volumes/ordiso-authentik-data/custom-templates:/templates
-    env_file: 
-      - .env
-    ports:
-      - "9001:9000"
-      - "9442:9443"
-    depends_on:
-      - ordiso-authentik-postgres
-      - ordiso-authentik-redis
-
-  ordiso-authentik-worker:
-    image: ghcr.io/goauthentik/server:2024.6.0
-    container_name: ordiso-authentik-worker
-    restart: unless-stopped
-    command: worker
-    environment:
-      - AUTHENTIK_REDIS__HOST=ordiso-authentik-redis
-      - AUTHENTIK_POSTGRESQL__HOST=ordiso-authentik-postgres
-      - AUTHENTIK_POSTGRESQL__USER=${POSTGRES_USER}
-      - AUTHENTIK_POSTGRESQL__NAME=${POSTGRES_DB}
-      - AUTHENTIK_POSTGRESQL__PASSWORD=${POSTGRES_PASSWORD}
-      - AUTHENTIK_SECRET_KEY=${AUTHENTIK_SECRET_KEY}
-      - AUTHENTIK_ERROR_REPORTING__ENABLED=true
-    user: root
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./data/volumes/ordiso-authentik-data/media:/media
-      - ./data/volumes/ordiso-authentik-data/certs:/certs
-      - ./data/volumes/ordiso-authentik-data/custom-templates:/templates
-    env_file: 
-      - .env
-    depends_on:
-      - ordiso-authentik-postgres
-      - ordiso-authentik-redis
 
   ordiso-dns-server:
     image: ubuntu/bind9:latest
@@ -322,38 +217,70 @@ services:
       - ./data/volumes/ordiso-dns-server/var/records:/var/lib/bind
     restart: unless-stopped
 
+
+  ordiso-dockerproxy:
+    image: ghcr.io/tecnativa/docker-socket-proxy:latest
+    container_name: ordiso-dockerproxy
+    environment:
+      - CONTAINERS=1 # Allow access to viewing containers
+      - SERVICES=1 # Allow access to viewing services (necessary when using Docker Swarm)
+      - TASKS=1 # Allow access to viewing tasks (necessary when using Docker Swarm)
+      - POST=0 # Disallow any POST operations (effectively read-only)
+    ports:
+      - 2375:2375
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Mounted as read-only
+    restart: unless-stopped
+    networks:
+      - ordiso-internal
+
+
   ordiso-authelia:
     container_name: 'ordiso-authelia'
     image: 'authelia/authelia'
     restart: 'unless-stopped'
     networks:
-      net:
-        aliases: []
-    ports:
-      - "9091:9091"
+      - ordiso-internal
     volumes:
       - './data/volumes/ordiso-authelia-data/config:/config'
     environment:
       TZ: 'Europe/Madrid'
 
-  demo-nextcloud:
-    container_name: 'demo-nextcloud'
-    image: 'lscr.io/linuxserver/nextcloud'
-    restart: 'unless-stopped'
-    networks:
-      net:
-        aliases: []
+
+  ordiso-nextcloud:
+    container_name: ordiso-nextcloud
+    image: 'nextcloud'
+    restart: 'always'
     ports:
-      - "446:443"
+      - '8025:443'
     volumes:
-      - './data/volumes/demo-nextcloud/config:/config'
-      - './data/volumes/demo-nextcloud/data:/data'
+      - ./data/volumes/ordiso-nextcloud-data/data:/var/www/html
     environment:
-      PUID: '1000'
-      PGID: '1000'
-      TZ: 'Europe/Madrid'
+      - MYSQL_PASSWORD=replace-with-secure-password
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_HOST=ordiso-nextcloud-db
+    networks:
+      - ordiso-internal
     extra_hosts:
       - "host.docker.internal:host-gateway"
+  
+
+  ordiso-nextcloud-db:
+    image: mariadb
+    container_name: ordiso-nextcloud-db
+    restart: always
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    volumes:
+      - ./data/volumes/ordiso-nextcloud-db-data/data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=replace-with-secure-password
+      - MYSQL_PASSWORD=replace-with-secure-password
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+    networks:
+      - ordiso-internal
+
 
   ordiso-duplicati:
     image: ghcr.io/linuxserver/duplicati
@@ -367,11 +294,24 @@ services:
       - ./data/volumes/ordiso-duplicati-data/config:/config
       - ./data/volumes:/source
       - /backups:/backups
-    ports:
-      - 8200:8200
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - ordiso-internal
+
+
+  ordiso-node-red:
+    image: nodered/node-red:latest
+    container_name: ordiso-node-red
+    restart: always
+    # ports:
+    #   - '1880:1880'
+    networks:
+      - ordiso-internal
+    # volumes:
+    #   - ./data/volumes/ordiso-node-red-data:/data
+
 
 volumes:
   ordiso-mysql-data:
@@ -385,8 +325,13 @@ volumes:
   pypi-server:
     external: false
 
+
 networks:
-  default:
-    external: false
-  net:
-    driver: 'bridge'
+  ordiso-public:
+    name: ordiso-public
+    driver: bridge
+  ordiso-internal:
+    name: ordiso-internal
+    driver: bridge
+  
+  
