@@ -1,0 +1,27 @@
+---
+services:
+  ordiso-db-postgres:
+    image: postgres:14
+    container_name: ordiso-db-postgres
+    restart: always
+    user: 1000:1000
+    env_file: .env
+    ports:
+      - "54320:5432"
+    volumes:
+      - /data/volumes/ordiso-db-postgres-data/var/lib/postgresql/data:/var/lib/postgresql/data
+    labels:
+      traefik.enable: "true"
+      traefik.tcp.routers.ordiso-db-postgres.rule: "HostSNI(`postgres.embeddedsource.es`)"
+      traefik.tcp.routers.ordiso-db-postgres.entrypoints: "postgres"
+      traefik.tcp.routers.ordiso-db-postgres.service: "ordiso-db-postgres"
+      traefik.tcp.routers.ordiso-db-postgres.tls: "true"
+      traefik.tcp.routers.ordiso-db-postgres.tls.passthrough: "true"
+      traefik.tcp.services.ordiso-db-postgres.loadbalancer.server.port: "5432"
+    networks:
+      - ordiso-traefik-default
+
+networks:
+  ordiso-traefik-default:
+    external: true
+

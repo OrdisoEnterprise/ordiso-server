@@ -1,0 +1,18 @@
+---
+services:
+  ordiso-vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: ordiso-vaultwarden
+    restart: always
+    volumes:
+      - /data/volumes/ordiso-bitwarden-data/data:/data
+    env_file: .env
+    environment:
+      WEBSOCKET_ENABLED: 'true'
+      SIGNUPS_ALLOWED: 'true'
+      PUSH_ENABLED: ${PUSH_ENABLED:-'true'}
+      PUSH_INSTALLATION_ID: ${PUSH_INSTALLATION_ID:-''}
+      PUSH_INSTALLATION_KEY: ${PUSH_INSTALLATION_KEY:-''}
+      PUSH_RELAY_BASE_URI: https://push.bitwarden.com
+    # networks:
+    #   - ordiso-internal

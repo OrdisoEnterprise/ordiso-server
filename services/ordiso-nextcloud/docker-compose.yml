@@ -1,0 +1,37 @@
+---
+services:
+  ordiso-nextcloud:
+    container_name: ordiso-nextcloud
+    image: 'nextcloud'
+    restart: 'always'
+    env_file: .env
+    volumes:
+      - /data/volumes/ordiso-nextcloud-data/data:/var/www/html
+    labels:
+      traefik.http.routers.ordiso-nextcloud.rule: "Host(`nextcloud.embeddedsource.es`)"
+      traefik.http.routers.ordiso-nextcloud.entrypoints: "web,websecure"
+      traefik.http.routers.ordiso-nextcloud.tls: "true"
+      traefik.http.routers.ordiso-nextcloud.tls.certresolver: "production"
+      traefik.http.routers.ordiso-nextcloud.middlewares: "authelia@docker"
+    networks:
+      - ordiso-nextcloud-internal
+      - ordiso-traefik-default
+  
+  ordiso-nextcloud-db:
+    image: mariadb
+    container_name: ordiso-nextcloud-db
+    restart: always
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    volumes:
+      - /data/volumes/ordiso-nextcloud-db-data/data:/var/lib/mysql
+    env_file: .env
+    networks:
+      - ordiso-nextcloud-internal
+
+networks:
+  ordiso-nextcloud-internal:
+    name: ordiso-nextcloud-internal
+    driver: bridge
+  ordiso-traefik-default:
+    external: true
+  

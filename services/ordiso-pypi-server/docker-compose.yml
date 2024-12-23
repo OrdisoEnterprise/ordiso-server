@@ -1,0 +1,22 @@
+---
+services:
+  ordiso-pypi-server:
+    image: pypiserver/pypiserver:latest
+    container_name: ordiso-pypi-server
+    volumes:
+      - /data/volumes/ordiso-pypi-server-data/data/packages:/data/packages
+    command: -P . -a . /data/packages
+    restart: always
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.ordiso-pypi-server.rule: "Host(`pypi.embeddedsource.es`)"
+      traefik.http.routers.ordiso-pypi-server.entrypoints: "web,websecure"
+      traefik.http.routers.ordiso-pypi-server.tls: "true"
+      traefik.http.routers.ordiso-pypi-server.tls.certresolver: "production"
+      # traefik.http.routers.ordiso-pypi-server.middlewares: "authelia@docker"
+    networks:
+      - ordiso-traefik-default
+
+networks:
+  ordiso-traefik-default:
+    external: true

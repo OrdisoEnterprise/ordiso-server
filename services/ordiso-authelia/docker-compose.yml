@@ -1,0 +1,26 @@
+---
+services:
+  ordiso-authelia:
+    image: authelia/authelia
+    container_name: ordiso-authelia
+    restart: unless-stopped
+    volumes:
+      - /data/volumes/ordiso-authelia-data/config:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      TZ: 'Europe/Madrid'
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.authelia.rule: "Host(`auth.embeddedsource.es`)"
+      traefik.http.routers.authelia.entryPoints: "websecure"
+      traefik.http.routers.authelia.tls: "true"
+      traefik.http.routers.authelia.tls.certresolver: "production"
+      traefik.http.middlewares.authelia.forwardAuth.address: "http://ordiso-authelia:9091/api/authz/forward-auth"
+      traefik.http.middlewares.authelia.forwardAuth.trustForwardHeader: "true"
+      traefik.http.middlewares.authelia.forwardAuth.authResponseHeaders: "Remote-User,Remote-Groups,Remote-Email,Remote-Name"
+    networks:
+      - ordiso-traefik-default
+
+networks:
+  ordiso-traefik-default:
+    external: true

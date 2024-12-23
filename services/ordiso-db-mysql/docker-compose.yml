@@ -1,0 +1,24 @@
+services:
+  ordiso-db-mysql:
+    image: mysql:8.0
+    container_name: ordiso-db-mysql
+    restart: always
+    env_file: .env
+    ports:
+      - "33050:3306"
+    volumes:
+      - /data/volumes/ordiso-db-mysql-data/var/lib/mysql:/var/lib/mysql
+    labels:
+      traefik.enable: "true"
+      traefik.tcp.routers.ordiso-db-mysql.rule: "HostSNI(`mysql.embeddedsource.es`)"
+      traefik.tcp.routers.ordiso-db-mysql.entrypoints: "mysql"
+      traefik.tcp.routers.ordiso-db-mysql.service: "ordiso-db-mysql"
+      traefik.tcp.routers.ordiso-db-mysql.tls: "true"
+      traefik.tcp.routers.ordiso-db-mysql.tls.passthrough: "true"
+      traefik.tcp.services.ordiso-db-mysql.loadbalancer.server.port: "3306"
+    networks:
+      - ordiso-traefik-default
+
+networks:
+  ordiso-traefik-default:
+    external: true

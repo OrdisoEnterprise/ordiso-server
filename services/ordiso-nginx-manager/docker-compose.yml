@@ -1,0 +1,21 @@
+---
+services:
+  ordiso_nginx_manager:
+    image: jc21/nginx-proxy-manager:latest
+    restart: unless-stopped
+    container_name: ordiso_nginx_manager
+    ports:
+      - '80:80'
+      - '81:81'
+      - '443:443'
+      - '33040:33040'
+    volumes:
+      - /data/volumes/ordiso-nginx-manager-data/data:/data
+      - /data/volumes/ordiso-nginx-manager-data/letsencrypt:/etc/letsencrypt
+      - /data/volumes/ordiso-nginx-manager-data/snippets:/snippets
+    # networks:
+    #   - ordiso-internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      TZ: 'Europe/Madrid'

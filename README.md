@@ -1,4 +1,5 @@
-# Introduction
+# Ordiso `Production` Server
 
-## Run the docker
-docker-compose up -d
+## Introduction
+
+This Repository contains the infraestructure and configuration for the `Production` server of the Ordiso project. 

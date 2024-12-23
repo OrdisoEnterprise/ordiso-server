@@ -1,0 +1,12 @@
+---
+services:
+  ordiso-ddclient:
+    image: lscr.io/linuxserver/ddclient:latest
+    container_name: ordiso-ddclient
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=Europe/Madrid
+    volumes:
+      - /data/volumes/ordiso-ddclient-data/config:/config
+    restart: unless-stopped

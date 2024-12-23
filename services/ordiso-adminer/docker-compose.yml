@@ -1,0 +1,17 @@
+services:
+  ordiso-adminer:
+    image: adminer:latest
+    restart: always
+    container_name: ordiso-adminer
+    labels:
+      traefik.enable: "true"
+      traefik.tcp.routers.ordiso-adminer.rule: "HostSNI(`mysql.embeddedsource.es`)"
+      traefik.tcp.routers.ordiso-adminer.entrypoints: "mysql"
+      traefik.tcp.routers.ordiso-adminer.service: "ordiso-adminer"
+      traefik.tcp.routers.ordiso-adminer.tls: "true"
+    networks:
+      - ordiso-traefik-default
+
+networks:
+  ordiso-traefik-default:
+    external: true

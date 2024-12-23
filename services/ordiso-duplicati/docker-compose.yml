@@ -1,0 +1,27 @@
+---
+services:
+  ordiso-duplicati:
+    image: ghcr.io/linuxserver/duplicati
+    container_name: ordiso-duplicati
+    ports:
+      - 8200:8200
+    env_file: .env
+    volumes:
+      - /data/volumes/ordiso-duplicati-data/config:/config
+      - /data/volumes:/source
+      - /backups:/backups
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.ordiso-duplicati.rule: "Host(`duplicati.embeddedsource.es`)"
+      traefik.http.routers.ordiso-duplicati.entrypoints: "web,websecure"
+      traefik.http.routers.ordiso-duplicati.tls: "true"
+      traefik.http.routers.ordiso-duplicati.tls.certresolver: "production"
+      traefik.http.routers.ordiso-duplicati.middlewares: "authelia@docker"
+    networks:
+      - ordiso-traefik-default
+
+networks:
+  ordiso-traefik-default:
+    external: true
