@@ -1,0 +1,22 @@
+---
+services:
+  ordiso-node-red:
+    image: nodered/node-red:latest
+    container_name: ordiso-node-red
+    user: root
+    restart: always
+    volumes:
+      - /data/volumes/ordiso-node-red-data/data:/data
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.ordiso-node-red.rule: "Host(`nodered.embeddedsource.es`)"
+      traefik.http.routers.ordiso-node-red.entrypoints: "web,websecure"
+      traefik.http.routers.ordiso-node-red.tls: "true"
+      traefik.http.routers.ordiso-node-red.tls.certresolver: "production"
+      # traefik.http.routers.ordiso-node-red.middlewares: "authelia@docker"
+    networks:
+      - ordiso-traefik-default
+
+networks:
+  ordiso-traefik-default:
+    external: true

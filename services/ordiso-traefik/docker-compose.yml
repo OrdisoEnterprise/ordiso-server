@@ -1,0 +1,35 @@
+services:
+
+  ordiso-traefik:
+    image: traefik:v3.2
+    container_name: ordiso-traefik
+    ports:
+      - "80:80"
+      - "81:81"
+      - "443:443"
+      - "8080:8080"
+      - "33040:33040"
+    volumes:
+      - ./config/traefik.yaml:/etc/traefik/traefik.yaml:ro
+      - ./config/conf/:/etc/traefik/conf/
+      - /data/volumes/ordiso-traefik-data/config/certs/:/etc/traefik/certs/
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - ordiso-traefik-default
+
+  ordiso-whoami:
+    image: traefik/whoami
+    container_name: ordiso-whoami
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ordiso-whoami.rule=Host(`whoami.localhost`)"
+      - "traefik.http.routers.ordiso-whoami.entrypoints=web,websecure"
+      - "traefik.http.routers.ordiso-whoami.tls=true"
+      - "traefik.http.routers.ordiso-whoami.tls.certresolver=production"
+    networks:
+      - ordiso-traefik-default
+
+networks:
+  ordiso-traefik-default:
+    name: ordiso-traefik-default
+    driver: bridge

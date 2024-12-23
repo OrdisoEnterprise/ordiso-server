@@ -1,0 +1,16 @@
+---
+services:
+  ordiso-dns-server:
+    image: ubuntu/bind9:latest
+    container_name: ordiso-dns-server
+    environment:
+      - BIND9_USER=root
+      - TZ=Europe/Madrid
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+    volumes:
+      - ./config:/etc/bind
+      - /data/volumes/ordiso-dns-server/var/cache/bind:/var/cache/bind
+      - /data/volumes/ordiso-dns-server/var/records:/var/lib/bind
+    restart: unless-stopped

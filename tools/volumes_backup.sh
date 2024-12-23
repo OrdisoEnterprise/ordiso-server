@@ -10,5 +10,5 @@ docker run --rm --volumes-from ordiso_pypi_server -v /home/ordiso/Ordiso-Server/
 tar -xvf /home/ordiso/Ordiso-Server/data/volumes/ordiso-pypi-server-data/backup.tar -C /home/ordiso/Ordiso-Server/data/volumes/ordiso-pypi-server-data
 
 
-docker run --rm --volumes-from ordiso_superset_app -v /home/ordiso/Ordiso-Server/data/volumes/ordiso-superset-data:/backup ubuntu tar cvf /backup/backup.tar /app/docker /app/superset_home
+docker run --rm --volumes-from ordiso-superset-app -v /home/ordiso/Ordiso-Server/data/volumes/ordiso-superset-data:/backup ubuntu tar cvf /backup/backup.tar /app/docker /app/superset_home
 tar -xvf /home/ordiso/Ordiso-Server/data/volumes/ordiso-superset-data/backup.tar -C /home/ordiso/Ordiso-Server/data/volumes/ordiso-superset-data

@@ -1,0 +1,85 @@
+x-superset-image: &superset-image apachesuperset.docker.scarf.sh/apache/superset:${TAG:-latest}
+x-superset-depends-on: &superset-depends-on
+  - ordiso-superset-cache
+x-superset-volumes:
+  &superset-volumes # /app/pythonpath_docker will be appended to the PYTHONPATH in the final container
+  - ./docker/:/app/docker/
+  - /data/volumes/ordiso-superset-data/app/superset_home:/app/superset_home
+
+services:
+  ordiso_superset:
+    env_file: .env
+    image: *superset-image
+    container_name: ordiso-superset-app
+    command: ["/app/docker/docker-bootstrap.sh", "app-gunicorn"]
+    user: "root"
+    restart: unless-stopped
+    ports:
+      - 8088:8088
+    depends_on: *superset-depends-on
+    volumes: *superset-volumes
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.ordiso-superset.rule: "Host(`superset.embeddedsource.es`)"
+      traefik.http.routers.ordiso-superset.entrypoints: "web,websecure"
+      traefik.http.routers.ordiso-superset.tls: "true"
+      traefik.http.routers.ordiso-superset.tls.certresolver: "production"
+      traefik.http.routers.ordiso-superset.middlewares: "authelia@docker"
+      traefik.http.services.ordiso-superset.loadbalancer.server.port: "8088"
+    networks:
+      - ordiso-superset-internal
+      - ordiso-traefik-default
+
+  ordiso-superset-worker:
+    image: *superset-image
+    container_name: ordiso-superset-worker
+    command: ["/app/docker/docker-bootstrap.sh", "worker"]
+    env_file: .env
+    restart: unless-stopped
+    depends_on: *superset-depends-on
+    user: "root"
+    volumes: *superset-volumes
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "celery -A superset.tasks.celery_app:app inspect ping -d celery@$$HOSTNAME",
+        ]
+    networks:
+      - ordiso-superset-internal
+      - ordiso-traefik-default
+
+  ordiso-superset-worker-beat:
+    image: *superset-image
+    container_name: ordiso-superset-worker-beat
+    command: ["/app/docker/docker-bootstrap.sh", "beat"]
+    env_file: .env
+    restart: unless-stopped
+    depends_on: *superset-depends-on
+    user: "root"
+    volumes: *superset-volumes
+    healthcheck:
+      disable: true
+    networks:
+      - ordiso-superset-internal
+      - ordiso-traefik-default
+
+  ordiso-superset-cache:
+    image: redis:7
+    container_name: ordiso-superset-cache
+    restart: unless-stopped
+    volumes:
+      - /data/volumes/ordiso-superset-data/redis/data:/data
+    networks:
+      - ordiso-superset-internal
+      - ordiso-traefik-default
+
+
+networks:
+  ordiso-superset-internal:
+    name: ordiso-superset-internal
+    driver: bridge
+  ordiso-traefik-default:
+    external: true
+  
+  

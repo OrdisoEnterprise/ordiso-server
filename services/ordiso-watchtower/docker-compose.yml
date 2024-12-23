@@ -1,0 +1,8 @@
+---
+services:
+  watchtower:
+    image: containrrr/watchtower
+    container_name: ordiso-watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 30
