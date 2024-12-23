@@ -1,0 +1,12 @@
+---
+services:
+  ordiso-telegram-bot:
+    image: dgongut/docker-controller-bot:latest
+    container_name: ordiso-telegram-bot
+    restart: always
+    env_file: .env
+    volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+        - /data/volumes/ordiso-telegram-bot-data:/app/schedule
+    network_mode: host
+    tty: true
