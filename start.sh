@@ -12,32 +12,32 @@ fi
 
 # Initialize Docker Compose files
 echo "Initializing Traefik..."
-docker compose -f ${DIR}/services/ordiso-traefik/services-compose.yml up -d
+docker compose -f ${DIR}/services/ordiso-traefik/docker-compose.yml up -d
 
 echo "Initializing DDClient..."
-docker compose -f ${DIR}/services/ordiso-ddclient/services-compose.yml up -d
+docker compose -f ${DIR}/services/ordiso-ddclient/docker-compose.yml up -d
 
 echo "Initializing Databases..."
-docker compose -f ${DIR}/services/ordiso-db-postgres/services-compose.yml up -d
-docker compose -f ${DIR}/services/ordiso-db-mysql/services-compose.yml up -d
+docker compose -f ${DIR}/services/ordiso-db-postgres/docker-compose.yml up -d
+docker compose -f ${DIR}/services/ordiso-db-mysql/docker-compose.yml up -d
 
 echo "Initializing Critical Components..."
-docker compose -f ${DIR}/services/ordiso-authelia/services-compose.yml up -d
-docker compose -f ${DIR}/services/ordiso-watchtower/services-compose.yml up -d
-docker compose -f ${DIR}/services/ordiso-duplicati/services-compose.yml up -d
-docker compose -f ${DIR}/services/ordiso-vaultwarden/services-compose.yml up -d
-# docker compose -f ${DIR}/services/ordiso-wazuh/services-compose.yml up -d
-# docker compose -f ${DIR}/services/ordiso-dns-server/services-compose.yml up -d
+docker compose -f ${DIR}/services/ordiso-authelia/docker-compose.yml up -d
+docker compose -f ${DIR}/services/ordiso-watchtower/docker-compose.yml up -d
+docker compose -f ${DIR}/services/ordiso-duplicati/docker-compose.yml up -d
+docker compose -f ${DIR}/services/ordiso-vaultwarden/docker-compose.yml up -d
+# docker compose -f ${DIR}/services/ordiso-wazuh/docker-compose.yml up -d
+# docker compose -f ${DIR}/services/ordiso-dns-server/docker-compose.yml up -d
 
 # echo "Initializing Monitoring Components..."
-# docker compose -f ${DIR}/services/ordiso-frometheus/services-compose.yml up -d
-# docker compose -f ${DIR}/services/ordiso-grafana/services-compose.yml up -d
+# docker compose -f ${DIR}/services/ordiso-frometheus/docker-compose.yml up -d
+# docker compose -f ${DIR}/services/ordiso-grafana/docker-compose.yml up -d
 
 echo "Initializing Other..."
-docker compose -f ${DIR}/services/ordiso-homepage/services-compose.yml up -d
-docker compose -f ${DIR}/services/ordiso-pypi-server/services-compose.yml up -d
-# docker compose -f ${DIR}/services/ordiso-nextcloud/services-compose.yml up -d
-# docker compose -f ${DIR}/services/ordiso-node-red/services-compose.yml up -d
-# docker compose -f ${DIR}/services/ordiso-superset/services-compose.yml up -d
+docker compose -f ${DIR}/services/ordiso-homepage/docker-compose.yml up -d
+docker compose -f ${DIR}/services/ordiso-pypi-server/docker-compose.yml up -d
+# docker compose -f ${DIR}/services/ordiso-nextcloud/docker-compose.yml up -d
+# docker compose -f ${DIR}/services/ordiso-node-red/docker-compose.yml up -d
+# docker compose -f ${DIR}/services/ordiso-superset/docker-compose.yml up -d
 
 echo "All Docker Compose files have been launched."
