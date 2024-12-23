@@ -1,15 +1,15 @@
 global:
-  checkNewVersion: false
+  checkNewVersion: true
   sendAnonymousUsage: false
 
 accessLog: {}
 
 log:
-  level: DEBUG
+  level: ERROR
 
 api:
   dashboard: true
-  insecure: true
+  insecure: false
   debug: false
 
 entryPoints:

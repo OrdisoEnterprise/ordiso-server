@@ -11,6 +11,6 @@ services:
       - "53:53/udp"
     volumes:
       - ./config:/etc/bind
-      - /data/volumes/ordiso-dns-server/var/cache/bind:/var/cache/bind
-      - /data/volumes/ordiso-dns-server/var/records:/var/lib/bind
+      - /data/volumes/ordiso-dns-server-data/var/cache/bind:/var/cache/bind
+      - /data/volumes/ordiso-dns-server-data/var/records:/var/lib/bind
     restart: unless-stopped
