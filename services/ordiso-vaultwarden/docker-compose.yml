@@ -6,6 +6,7 @@ services:
     restart: always
     volumes:
       - /data/volumes/ordiso-bitwarden-data/data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
     env_file: .env
     environment:
       WEBSOCKET_ENABLED: 'true'
@@ -13,6 +14,16 @@ services:
       PUSH_ENABLED: ${PUSH_ENABLED:-'true'}
       PUSH_INSTALLATION_ID: ${PUSH_INSTALLATION_ID:-''}
       PUSH_INSTALLATION_KEY: ${PUSH_INSTALLATION_KEY:-''}
-      PUSH_RELAY_BASE_URI: https://push.bitwarden.com
-    # networks:
-    #   - ordiso-internal
+      PUSH_RELAY_BASE_URI: ${PUSH_RELAY_BASE_URI:-''}
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.ordiso-vaultwarden.rule: "Host(`vault.embeddedsource.es`)"
+      traefik.http.routers.ordiso-vaultwarden.entrypoints: "websecure"
+      traefik.http.routers.ordiso-vaultwarden.tls: "true"
+      traefik.http.routers.ordiso-vaultwarden.tls.certresolver: "production"
+    networks:
+      - ordiso-traefik-default
+
+networks:
+  ordiso-traefik-default:
+    external: true
