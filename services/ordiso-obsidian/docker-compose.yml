@@ -1,0 +1,32 @@
+---
+services:
+  ordiso-obsidian:
+    image: lscr.io/linuxserver/obsidian:latest
+    container_name: ordiso-obsidian
+    security_opt:
+      - seccomp:unconfined #optional
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+    volumes:
+      - /data/volumes/ordiso-obsidian-data/config:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 1465:3000
+      - 1466:3001
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.ordiso-obsidian.rule: "Host(`obsidian.embeddedsource.es`)"
+      traefik.http.routers.ordiso-obsidian.entrypoints: "web,websecure"
+      traefik.http.routers.ordiso-obsidian.tls: "true"
+      traefik.http.routers.ordiso-obsidian.tls.certresolver: "production"
+      traefik.http.routers.ordiso-obsidian.middlewares: "authelia@docker"
+    networks:
+      - ordiso-traefik-default
+    shm_size: "1gb"
+    restart: unless-stopped
+
+networks:
+  ordiso-traefik-default:
+    external: true

@@ -1,0 +1,44 @@
+---
+services:
+  ordiso-docker-registry:
+    image: registry:latest
+    container_name: ordiso-docker-registry
+    env_file: .env
+    restart: unless-stopped
+    ports:
+      - 5000:5000
+    volumes:
+      - /data/volumes/ordiso-docker-registry-data/registry.password:/auth/registry.password  # Password file
+      - /data/volumes/ordiso-docker-registry-data/data:/data # Data directory volume
+      - /data/volumes/ordiso-docker-registry-data/auth:/auth # Auth directory volume
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.ordiso-docker-registry.rule: "Host(`registry.embeddedsource.es`)"
+      traefik.http.routers.ordiso-docker-registry.entrypoints: "websecure"
+      traefik.http.services.ordiso-docker-registry.loadbalancer.server.port: 5000
+      traefik.http.routers.ordiso-docker-registry.tls: "true"
+      traefik.http.routers.ordiso-docker-registry.tls.certresolver: "production"
+    networks:
+      - ordiso-traefik-default
+
+  ordiso-docker-registry-ui:
+    image: joxit/docker-registry-ui:main
+    restart: always
+    ports:
+      - 1635:80
+    env_file: .env
+    container_name: ordiso-docker-registry-ui
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.ordiso-docker-registry-ui.rule: "Host(`registryui.embeddedsource.es`)"
+      traefik.http.routers.ordiso-docker-registry-ui.entrypoints: "web,websecure"
+      traefik.http.services.ordiso-docker-registry-ui.loadbalancer.server.port: 80
+      traefik.http.routers.ordiso-docker-registry-ui.tls: "true"
+      traefik.http.routers.ordiso-docker-registry-ui.tls.certresolver: "production"
+    networks:
+      - ordiso-traefik-default
+
+networks:
+  ordiso-traefik-default:
+    external: true

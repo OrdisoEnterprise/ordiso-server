@@ -17,4 +17,6 @@ tls:
       keyFile: /etc/traefik/certs/duplicati.embeddedsource.es.key
     - certFile: /etc/traefik/certs/auth.embeddedsource.es.crt
       keyFile: /etc/traefik/certs/auth.embeddedsource.es.key
+    - certFile: /etc/traefik/certs/registry.embeddedsource.es.crt
+      keyFile: /etc/traefik/certs/registry.embeddedsource.es.key
     
