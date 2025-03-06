@@ -1,0 +1,55 @@
+---
+services:
+
+  ordiso-hedgedoc-database:
+    image: postgres:16-alpine
+    container_name: ordiso-hedgedoc-database
+    environment:
+      - POSTGRES_USER=hedgedoc
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=hedgedoc
+    volumes:
+      - /data/volumes/ordiso-hedgedoc-data/data:/var/lib/data
+    networks:
+      - ordiso-traefik-default
+    restart: unless-stopped
+
+  ordiso-hedgedoc:
+    image: lscr.io/linuxserver/hedgedoc:latest
+    container_name: ordiso-hedgedoc
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - CMD_DB_URL=postgres://hedgedoc:password@ordiso-hedgedoc-database:5432/hedgedoc
+      - CMD_DB_DIALECT=postgres
+      - CMD_DB_HOST=ordiso-hedgedoc-database
+      - CMD_DB_PORT=5432
+      - CMD_DB_USER=hedgedoc
+      - CMD_DB_NAME=hedgedoc
+      - CMD_DB_PASSWORD=password
+      - CMD_DB_SSL=true
+      - CMD_ALLOW_ORIGIN=https://hedgedoc.embeddedsource.es
+      - CMD_CSP_ENABLE=false
+    volumes:
+      - /data/volumes/ordiso-hedgedoc-data/config:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 7744:3000
+    depends_on:
+      - ordiso-hedgedoc-database
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.ordiso-hedgedoc.rule: "Host(`hedgedoc.embeddedsource.es`)"
+      traefik.http.routers.ordiso-hedgedoc.entrypoints: "web,websecure"
+      traefik.http.routers.ordiso-hedgedoc.tls: "true"
+      traefik.http.routers.ordiso-hedgedoc.tls.certresolver: "production"
+      # traefik.http.routers.ordiso-hedgedoc.middlewares: "authelia@docker"
+    networks:
+      - ordiso-traefik-default
+    shm_size: "1gb"
+    restart: unless-stopped
+
+networks:
+  ordiso-traefik-default:
+    external: true

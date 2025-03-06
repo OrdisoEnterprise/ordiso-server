@@ -1,0 +1,50 @@
+---
+services:
+
+  ordiso-wiki-db:
+    image: postgres:15-alpine
+    container_name: ordiso-wiki-db
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+    logging:
+      driver: none
+    restart: unless-stopped
+    volumes:
+      - /data/volumes/ordiso-wikijs-data/data:/var/lib/postgresql/data
+    networks:
+      - ordiso-wiki-internal
+
+  ordiso-wiki:
+    image: ghcr.io/requarks/wiki:2
+    container_name: ordiso-wiki
+    depends_on:
+      - ordiso-wiki-db
+    env_file: .env
+    environment:
+      DB_TYPE: postgres
+      DB_HOST: ordiso-wiki-db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      DB_NAME: ${DB_NAME}
+    restart: unless-stopped
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.ordiso-wiki.rule: "Host(`wiki.embeddedsource.es`)"
+      traefik.http.routers.ordiso-wiki.entrypoints: "web,websecure"
+      traefik.http.routers.ordiso-wiki.tls: "true"
+      traefik.http.routers.ordiso-wiki.tls.certresolver: "production"
+      # traefik.http.routers.ordiso-wiki.middlewares: "authelia@docker"
+    networks:
+      - ordiso-traefik-default
+      - ordiso-wiki-internal
+    shm_size: "1gb"
+
+networks:
+  ordiso-traefik-default:
+    external: true
+  ordiso-wiki-internal:
+    driver: bridge  
