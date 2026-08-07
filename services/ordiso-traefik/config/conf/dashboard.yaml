@@ -1,0 +1,35 @@
+http:
+  routers:
+    traefik-dashboard:
+      rule: "Host(`traefik.embeddedsource.es`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+      entryPoints:
+        - websecure
+      service: api@internal
+      middlewares:
+        - basic-auth-global
+      tls:
+        certResolver: production
+
+    traefik-dashboard-root:
+      rule: "Host(`traefik.embeddedsource.es`) && Path(`/`)"
+      entryPoints:
+        - websecure
+      service: noop@internal
+      middlewares:
+        - basic-auth-global
+        - traefik-dashboard-redirect
+      tls:
+        certResolver: production
+
+  middlewares:
+    basic-auth-global:
+      basicAuth:
+        users:
+          - "asanchez:$2y$05$y28goziQZ0H6Zvs93SpF8eAQiD/hrexNpyLQ84JYIU.j0feMFFwRi"
+          - "admin:$2y$05$cFZJKWs8mPkQER/R034glukJlVQmg5ARpcdA8aptk07denfdEdBji"
+
+    traefik-dashboard-redirect:
+      redirectRegex:
+        regex: "^https://traefik\\.embeddedsource\\.es(:[0-9]+)?/$"
+        replacement: "https://traefik.embeddedsource.es$1/dashboard/"
+        permanent: false

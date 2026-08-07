@@ -6,8 +6,8 @@ services:
     restart: always
     user: 1000:1000
     env_file: .env
-    ports:
-      - "54320:5432"
+    # ports:
+    #   - "127.0.0.1:54320:5432"
     volumes:
       - /data/volumes/ordiso-db-postgres-data/var/lib/postgresql/data:/var/lib/postgresql/data
     labels:

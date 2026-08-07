@@ -33,9 +33,8 @@ services:
       - CMD_CSP_ENABLE=false
     volumes:
       - /data/volumes/ordiso-hedgedoc-data/config:/config
-      - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      - 7744:3000
+    # ports:
+    #   - "127.0.0.1:7744:3000"
     depends_on:
       - ordiso-hedgedoc-database
     labels:
@@ -44,6 +43,7 @@ services:
       traefik.http.routers.ordiso-hedgedoc.entrypoints: "web,websecure"
       traefik.http.routers.ordiso-hedgedoc.tls: "true"
       traefik.http.routers.ordiso-hedgedoc.tls.certresolver: "production"
+      traefik.http.services.ordiso-hedgedoc.loadbalancer.server.port: "3000"
       # traefik.http.routers.ordiso-hedgedoc.middlewares: "authelia@docker"
     networks:
       - ordiso-traefik-default

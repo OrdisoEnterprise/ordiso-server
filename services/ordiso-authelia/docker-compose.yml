@@ -6,7 +6,6 @@ services:
     restart: unless-stopped
     volumes:
       - /data/volumes/ordiso-authelia-data/config:/config
-      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       TZ: 'Europe/Madrid'
     labels:
@@ -15,6 +14,7 @@ services:
       traefik.http.routers.authelia.entryPoints: "websecure"
       traefik.http.routers.authelia.tls: "true"
       traefik.http.routers.authelia.tls.certresolver: "production"
+      traefik.http.services.authelia.loadbalancer.server.port: "9091"
       traefik.http.middlewares.authelia.forwardAuth.address: "http://ordiso-authelia:9091/api/authz/forward-auth"
       traefik.http.middlewares.authelia.forwardAuth.trustForwardHeader: "true"
       traefik.http.middlewares.authelia.forwardAuth.authResponseHeaders: "Remote-User,Remote-Groups,Remote-Email,Remote-Name"

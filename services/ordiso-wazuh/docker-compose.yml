@@ -11,11 +11,11 @@ services:
       nofile:
         soft: 655360
         hard: 655360
-    ports:
-      - "1514:1514"
-      - "1515:1515"
-      - "514:514/udp"
-      - "55000:55000"
+    # ports:
+    #   - "127.0.0.1:1514:1514"
+    #   - "127.0.0.1:1515:1515"
+    #   - "127.0.0.1:514:514/udp"
+    #   - "127.0.0.1:55000:55000"
     environment:
       - INDEXER_URL=https://wazuh.indexer:9200
       - INDEXER_USERNAME=${INDEXER_USERNAME:?error}
@@ -52,8 +52,8 @@ services:
     hostname: wazuh.indexer
     restart: always
     user: 1000:1000
-    ports:
-      - "9200:9200"
+    # ports:
+    #   - "9200:9200"
     environment:
       - "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g"
     ulimits:
@@ -81,8 +81,8 @@ services:
     image: wazuh/wazuh-dashboard:4.9.2
     hostname: wazuh.dashboard
     restart: always
-    ports:
-      - 448:5601
+    # ports:
+    #   - 448:5601
     environment:
       - INDEXER_USERNAME=${INDEXER_USERNAME:?error}
       - INDEXER_PASSWORD=${INDEXER_PASSWORD:?error}

@@ -4,8 +4,8 @@ services:
     container_name: ordiso-db-mysql
     restart: always
     env_file: .env
-    ports:
-      - "33050:3306"
+    # ports:
+    #   - "127.0.0.1:33050:3306"
     volumes:
       - /data/volumes/ordiso-db-mysql-data/var/lib/mysql:/var/lib/mysql
     labels:

@@ -11,17 +11,17 @@ services:
       - TZ=Europe/Madrid
     volumes:
       - /data/volumes/ordiso-obsidian-data/config:/config
-      - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      - 1465:3000
-      - 1466:3001
+    # ports:
+    #   - "127.0.0.1:1465:3000"
+    #   - "127.0.0.1:1466:3001"
     labels:
       traefik.enable: "true"
       traefik.http.routers.ordiso-obsidian.rule: "Host(`obsidian.embeddedsource.es`)"
       traefik.http.routers.ordiso-obsidian.entrypoints: "web,websecure"
       traefik.http.routers.ordiso-obsidian.tls: "true"
       traefik.http.routers.ordiso-obsidian.tls.certresolver: "production"
-      traefik.http.routers.ordiso-obsidian.middlewares: "authelia@docker"
+      traefik.http.routers.ordiso-obsidian.middlewares: "authelia@file"
+      traefik.http.services.ordiso-obsidian.loadbalancer.server.port: "3000"
     networks:
       - ordiso-traefik-default
     shm_size: "1gb"

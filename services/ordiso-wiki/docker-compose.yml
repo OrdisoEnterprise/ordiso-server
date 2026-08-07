@@ -37,6 +37,7 @@ services:
       traefik.http.routers.ordiso-wiki.entrypoints: "web,websecure"
       traefik.http.routers.ordiso-wiki.tls: "true"
       traefik.http.routers.ordiso-wiki.tls.certresolver: "production"
+      traefik.http.services.ordiso-wiki.loadbalancer.server.port: "3000"
       # traefik.http.routers.ordiso-wiki.middlewares: "authelia@docker"
     networks:
       - ordiso-traefik-default

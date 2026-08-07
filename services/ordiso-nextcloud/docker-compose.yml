@@ -7,16 +7,16 @@ services:
     env_file: .env
     volumes:
       - /data/volumes/ordiso-nextcloud-data/data:/var/www/html
-      - /var/run/docker.sock:/var/run/docker.sock
     labels:
       traefik.enable: "true"
       traefik.http.routers.ordiso-nextcloud.rule: "Host(`nextcloud.embeddedsource.es`)"
       traefik.http.routers.ordiso-nextcloud.entrypoints: "web,websecure"
       traefik.http.routers.ordiso-nextcloud.tls: "true"
       traefik.http.routers.ordiso-nextcloud.tls.certresolver: "production"
+      traefik.http.services.ordiso-nextcloud.loadbalancer.server.port: "80"
     networks:
       - ordiso-traefik-default
-      # - ordiso-nextcloud-internal
+      - ordiso-nextcloud-internal
   
   ordiso-nextcloud-db:
     image: mariadb
@@ -27,13 +27,13 @@ services:
       - /data/volumes/ordiso-nextcloud-db-data/data:/var/lib/mysql
     env_file: .env
     networks:
-      - ordiso-traefik-default
-      # - ordiso-nextcloud-internal
+      - ordiso-nextcloud-internal
 
 networks:
   ordiso-nextcloud-internal:
     name: ordiso-nextcloud-internal
     driver: bridge
+    internal: true
   ordiso-traefik-default:
     external: true
   

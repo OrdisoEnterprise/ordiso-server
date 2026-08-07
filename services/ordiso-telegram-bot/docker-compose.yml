@@ -6,7 +6,15 @@ services:
     restart: always
     env_file: .env
     volumes:
-        - /var/run/docker.sock:/var/run/docker.sock
         - /data/volumes/ordiso-telegram-bot-data:/app/schedule
-    network_mode: host
     tty: true
+    networks:
+      - ordiso-traefik-default
+      - ordiso-telegram-bot-internal
+  
+networks:
+  ordiso-traefik-default:
+    external: true
+  ordiso-telegram-bot-internal:
+    name: ordiso-telegram-bot-internal
+    driver: bridge
