@@ -12,10 +12,10 @@ services:
     image: *superset-image
     container_name: ordiso-superset-app
     command: ["/app/docker/docker-bootstrap.sh", "app-gunicorn"]
-    user: "root"
+    user: 1000:1000
     restart: unless-stopped
-    ports:
-      - 8088:8088
+    # ports:
+    #   - "127.0.0.1:8088:8088"
     depends_on: *superset-depends-on
     volumes: *superset-volumes
     labels:
@@ -24,7 +24,7 @@ services:
       traefik.http.routers.ordiso-superset.entrypoints: "web,websecure"
       traefik.http.routers.ordiso-superset.tls: "true"
       traefik.http.routers.ordiso-superset.tls.certresolver: "production"
-      traefik.http.routers.ordiso-superset.middlewares: "authelia@docker"
+      traefik.http.routers.ordiso-superset.middlewares: "authelia@file"
       traefik.http.services.ordiso-superset.loadbalancer.server.port: "8088"
     networks:
       - ordiso-superset-internal
@@ -37,7 +37,7 @@ services:
     env_file: .env
     restart: unless-stopped
     depends_on: *superset-depends-on
-    user: "root"
+    user: 1000:1000
     volumes: *superset-volumes
     healthcheck:
       test:
@@ -56,7 +56,7 @@ services:
     env_file: .env
     restart: unless-stopped
     depends_on: *superset-depends-on
-    user: "root"
+    user: 1000:1000
     volumes: *superset-volumes
     healthcheck:
       disable: true

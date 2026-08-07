@@ -1,0 +1,236 @@
+http:
+  routers:
+    ordiso-adminer:
+      rule: "Host(`adminer.embeddedsource.es`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - authelia
+      service: ordiso-adminer
+      tls:
+        certResolver: production
+
+    ordiso-authelia:
+      rule: "Host(`auth.embeddedsource.es`)"
+      entryPoints:
+        - websecure
+      service: ordiso-authelia
+      tls:
+        certResolver: production
+
+    ordiso-docker-registry:
+      rule: "Host(`registry.embeddedsource.es`)"
+      entryPoints:
+        - websecure
+      service: ordiso-docker-registry
+      tls:
+        certResolver: production
+
+    ordiso-docker-registry-ui:
+      rule: "Host(`registryui.embeddedsource.es`)"
+      entryPoints:
+        - websecure
+      service: ordiso-docker-registry-ui
+      tls:
+        certResolver: production
+
+    ordiso-duplicati:
+      rule: "Host(`duplicati.embeddedsource.es`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - authelia
+      service: ordiso-duplicati
+      tls:
+        certResolver: production
+
+    ordiso-hedgedoc:
+      rule: "Host(`hedgedoc.embeddedsource.es`)"
+      entryPoints:
+        - websecure
+      service: ordiso-hedgedoc
+      tls:
+        certResolver: production
+
+    ordiso-homepage:
+      rule: "Host(`homepage.embeddedsource.es`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - authelia
+      service: ordiso-homepage
+      tls:
+        certResolver: production
+
+    ordiso-nextcloud:
+      rule: "Host(`nextcloud.embeddedsource.es`)"
+      entryPoints:
+        - websecure
+      service: ordiso-nextcloud
+      tls:
+        certResolver: production
+
+    ordiso-node-red:
+      rule: "Host(`nodered.embeddedsource.es`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - authelia
+      service: ordiso-node-red
+      tls:
+        certResolver: production
+
+    ordiso-obsidian:
+      rule: "Host(`obsidian.embeddedsource.es`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - authelia
+      service: ordiso-obsidian
+      tls:
+        certResolver: production
+
+    ordiso-pypi-server:
+      rule: "Host(`pypi.embeddedsource.es`)"
+      entryPoints:
+        - websecure
+      service: ordiso-pypi-server
+      tls:
+        certResolver: production
+
+    ordiso-superset:
+      rule: "Host(`superset.embeddedsource.es`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - authelia
+      service: ordiso-superset
+      tls:
+        certResolver: production
+
+    ordiso-vaultwarden:
+      rule: "Host(`vault.embeddedsource.es`)"
+      entryPoints:
+        - websecure
+      service: ordiso-vaultwarden
+      tls:
+        certResolver: production
+
+    ordiso-wiki:
+      rule: "Host(`wiki.embeddedsource.es`)"
+      entryPoints:
+        - websecure
+      service: ordiso-wiki
+      tls:
+        certResolver: production
+
+  middlewares:
+    authelia:
+      forwardAuth:
+        address: "http://ordiso-authelia:9091/api/authz/forward-auth"
+        trustForwardHeader: true
+        authResponseHeaders:
+          - Remote-User
+          - Remote-Groups
+          - Remote-Email
+          - Remote-Name
+
+  services:
+    ordiso-adminer:
+      loadBalancer:
+        servers:
+          - url: "http://ordiso-adminer:8080"
+
+    ordiso-authelia:
+      loadBalancer:
+        servers:
+          - url: "http://ordiso-authelia:9091"
+
+    ordiso-docker-registry:
+      loadBalancer:
+        servers:
+          - url: "http://ordiso-docker-registry:5000"
+
+    ordiso-docker-registry-ui:
+      loadBalancer:
+        servers:
+          - url: "http://ordiso-docker-registry-ui:80"
+
+    ordiso-duplicati:
+      loadBalancer:
+        servers:
+          - url: "http://ordiso-duplicati:8200"
+
+    ordiso-hedgedoc:
+      loadBalancer:
+        servers:
+          - url: "http://ordiso-hedgedoc:3000"
+
+    ordiso-homepage:
+      loadBalancer:
+        servers:
+          - url: "http://ordiso-homepage:3000"
+
+    ordiso-nextcloud:
+      loadBalancer:
+        servers:
+          - url: "http://ordiso-nextcloud:80"
+
+    ordiso-node-red:
+      loadBalancer:
+        servers:
+          - url: "http://ordiso-node-red:1880"
+
+    ordiso-obsidian:
+      loadBalancer:
+        servers:
+          - url: "http://ordiso-obsidian:3000"
+
+    ordiso-pypi-server:
+      loadBalancer:
+        servers:
+          - url: "http://ordiso-pypi-server:8080"
+
+    ordiso-superset:
+      loadBalancer:
+        servers:
+          - url: "http://ordiso-superset-app:8088"
+
+    ordiso-vaultwarden:
+      loadBalancer:
+        servers:
+          - url: "http://ordiso-vaultwarden:80"
+
+    ordiso-wiki:
+      loadBalancer:
+        servers:
+          - url: "http://ordiso-wiki:3000"
+
+tcp:
+  routers:
+    ordiso-db-mysql:
+      rule: "HostSNI(`mysql.embeddedsource.es`)"
+      entryPoints:
+        - mysql
+      service: ordiso-db-mysql
+      tls:
+        passthrough: true
+
+    ordiso-db-postgres:
+      rule: "HostSNI(`postgres.embeddedsource.es`)"
+      entryPoints:
+        - postgres
+      service: ordiso-db-postgres
+      tls:
+        passthrough: true
+
+  services:
+    ordiso-db-mysql:
+      loadBalancer:
+        servers:
+          - address: "ordiso-db-mysql:3306"
+
+    ordiso-db-postgres:
+      loadBalancer:
+        servers:
+          - address: "ordiso-db-postgres:5432"

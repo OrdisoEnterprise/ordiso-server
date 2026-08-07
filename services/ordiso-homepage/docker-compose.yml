@@ -4,18 +4,20 @@ services:
     image: ghcr.io/gethomepage/homepage:latest
     container_name: ordiso-homepage
     restart: unless-stopped
-    ports:
-      - 1500:3000
+    environment:
+      HOMEPAGE_ALLOWED_HOSTS: homepage.embeddedsource.es,homepage.embeddedsource.es:443,localhost,127.0.0.1
+    # ports:
+    #   - "127.0.0.1:1500:3000"
     volumes:
       - /data/volumes/ordiso-homepage-data/app/config:/app/config
-      - /var/run/docker.sock:/var/run/docker.sock
     labels:
       traefik.enable: "true"
       traefik.http.routers.ordiso-homepage.rule: "Host(`homepage.embeddedsource.es`)"
       traefik.http.routers.ordiso-homepage.entrypoints: "web,websecure"
       traefik.http.routers.ordiso-homepage.tls: "true"
       traefik.http.routers.ordiso-homepage.tls.certresolver: "production"
-      traefik.http.routers.ordiso-homepage.middlewares: "authelia@docker"
+      traefik.http.routers.ordiso-homepage.middlewares: "authelia@file"
+      traefik.http.services.ordiso-homepage.loadbalancer.server.port: "3000"
     networks:
       - ordiso-traefik-default
 
@@ -27,10 +29,8 @@ services:
       - SERVICES=1 # Allow access to viewing services (necessary when using Docker Swarm)
       - TASKS=1 # Allow access to viewing tasks (necessary when using Docker Swarm)
       - POST=0 # Disallow any POST operations (effectively read-only)
-    ports:
-      - 2375:2375
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+    # ports:
+    #   - 2375:2375
     restart: unless-stopped
     networks:
       - ordiso-traefik-default

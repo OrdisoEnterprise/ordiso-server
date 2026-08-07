@@ -5,13 +5,12 @@ services:
     container_name: ordiso-docker-registry
     env_file: .env
     restart: unless-stopped
-    ports:
-      - 5000:5000
+    # ports:
+    #   - "127.0.0.1:5000:5000"
     volumes:
       - /data/volumes/ordiso-docker-registry-data/registry.password:/auth/registry.password  # Password file
       - /data/volumes/ordiso-docker-registry-data/data:/data # Data directory volume
       - /data/volumes/ordiso-docker-registry-data/auth:/auth # Auth directory volume
-      - /var/run/docker.sock:/var/run/docker.sock
     labels:
       traefik.enable: "true"
       traefik.http.routers.ordiso-docker-registry.rule: "Host(`registry.embeddedsource.es`)"
@@ -25,8 +24,8 @@ services:
   ordiso-docker-registry-ui:
     image: joxit/docker-registry-ui:main
     restart: always
-    ports:
-      - 1635:80
+    # ports:
+    #   - "127.0.0.1:1635:80"
     env_file: .env
     container_name: ordiso-docker-registry-ui
     labels:

@@ -1,5 +1,20 @@
 services:
 
+  ordiso-docker-socket-proxy-internal:
+    image: ghcr.io/tecnativa/docker-socket-proxy:latest
+    container_name: ordiso-docker-socket-proxy-internal
+    environment:
+      - CONTAINERS=1
+      - SERVICES=1
+      - TASKS=1
+      - POST=0  # Read-only for most
+      # For Watchtower, enable minimal write access
+    # NO PORT EXPOSURE
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - docker-management-internal  # Isolated network
+
   ordiso-traefik:
     image: traefik:v3.2
     container_name: ordiso-traefik
@@ -10,10 +25,10 @@ services:
       - "33040:33040"
     volumes:
       - ./config/traefik.yaml:/etc/traefik/traefik.yaml:ro
-      - ./config/conf/:/etc/traefik/conf/
+      - ./config/conf/:/etc/traefik/conf/:ro
       - /data/volumes/ordiso-traefik-data/config/certs/:/etc/traefik/certs/
-      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
+      - docker-management-internal
       - ordiso-traefik-default
     labels:
       traefik.enable: true
@@ -26,6 +41,9 @@ services:
       traefik.http.middlewares.basic-auth-global.basicauth.users: asanchez:$$2y$$05$$y28goziQZ0H6Zvs93SpF8eAQiD/hrexNpyLQ84JYIU.j0feMFFwRi, admin:$$2y$$05$$cFZJKWs8mPkQER/R034glukJlVQmg5ARpcdA8aptk07denfdEdBji
 
 networks:
-  ordiso-traefik-default:
-    name: ordiso-traefik-default
+  docker-management-internal:
+    name: docker-management-internal
     driver: bridge
+    internal: true
+  ordiso-traefik-default:
+    external: true

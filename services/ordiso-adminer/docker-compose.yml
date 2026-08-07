@@ -5,10 +5,11 @@ services:
     container_name: ordiso-adminer
     labels:
       traefik.enable: "true"
-      traefik.tcp.routers.ordiso-adminer.rule: "HostSNI(`mysql.embeddedsource.es`)"
-      traefik.tcp.routers.ordiso-adminer.entrypoints: "mysql"
-      traefik.tcp.routers.ordiso-adminer.service: "ordiso-adminer"
-      traefik.tcp.routers.ordiso-adminer.tls: "true"
+      traefik.http.routers.ordiso-adminer.rule: "Host(`adminer.embeddedsource.es`)"
+      traefik.http.routers.ordiso-adminer.entrypoints: "websecure"
+      traefik.http.routers.ordiso-adminer.tls: "true"
+      traefik.http.routers.ordiso-adminer.tls.certresolver: "production"
+      traefik.http.services.ordiso-adminer.loadbalancer.server.port: "8080"
     networks:
       - ordiso-traefik-default
 

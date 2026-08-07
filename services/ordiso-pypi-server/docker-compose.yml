@@ -13,6 +13,7 @@ services:
       traefik.http.routers.ordiso-pypi-server.entrypoints: "web,websecure"
       traefik.http.routers.ordiso-pypi-server.tls: "true"
       traefik.http.routers.ordiso-pypi-server.tls.certresolver: "production"
+      traefik.http.services.ordiso-pypi-server.loadbalancer.server.port: "8080"
       # traefik.http.routers.ordiso-pypi-server.middlewares: "authelia@docker"
     networks:
       - ordiso-traefik-default

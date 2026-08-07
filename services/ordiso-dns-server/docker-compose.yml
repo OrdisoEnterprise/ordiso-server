@@ -4,11 +4,11 @@ services:
     image: ubuntu/bind9:latest
     container_name: ordiso-dns-server
     environment:
-      - BIND9_USER=root
+      - BIND9_USER=bind
       - TZ=Europe/Madrid
-    ports:
-      - "53:53/tcp"
-      - "53:53/udp"
+    # ports:
+    # - "127.0.0.1:53:53/tcp"  # Localhost only
+    # - "127.0.0.1:53:53/udp"
     volumes:
       - ./config:/etc/bind
       - /data/volumes/ordiso-dns-server-data/var/cache/bind:/var/cache/bind

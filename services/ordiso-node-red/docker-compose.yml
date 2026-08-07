@@ -3,7 +3,7 @@ services:
   ordiso-node-red:
     image: nodered/node-red:latest
     container_name: ordiso-node-red
-    user: root
+    user: 1000:1000
     restart: always
     volumes:
       - /data/volumes/ordiso-node-red-data/data:/data
@@ -13,6 +13,7 @@ services:
       traefik.http.routers.ordiso-node-red.entrypoints: "web,websecure"
       traefik.http.routers.ordiso-node-red.tls: "true"
       traefik.http.routers.ordiso-node-red.tls.certresolver: "production"
+      traefik.http.services.ordiso-node-red.loadbalancer.server.port: "1880"
       # traefik.http.routers.ordiso-node-red.middlewares: "authelia@docker"
     networks:
       - ordiso-traefik-default

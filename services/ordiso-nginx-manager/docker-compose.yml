@@ -4,11 +4,11 @@ services:
     image: jc21/nginx-proxy-manager:latest
     restart: unless-stopped
     container_name: ordiso_nginx_manager
-    ports:
-      - '80:80'
-      - '81:81'
-      - '443:443'
-      - '33040:33040'
+    # ports:
+    #   - '127.0.0.1:80:80'
+    #   - '127.0.0.1:81:81'
+    #   - '127.0.0.1:443:443'
+    #   - '127.0.0.1:33040:33040'
     volumes:
       - /data/volumes/ordiso-nginx-manager-data/data:/data
       - /data/volumes/ordiso-nginx-manager-data/letsencrypt:/etc/letsencrypt
